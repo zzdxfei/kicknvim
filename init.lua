@@ -190,6 +190,42 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+local map = vim.keymap.set
+map('i', '`', '<ESC>')
+map('i', '<ESC>', '`')
+map('o', '`', '<ESC>')
+map('o', '<ESC>', '`')
+map('v', '`', '<ESC>')
+map('v', '<ESC>', '`')
+map('n', '`', '<ESC>')
+map('n', '<ESC>', '`')
+map('c', '`', '<C-U><CR>')
+map('c', '<ESC>', '`')
+map('t', '`', [[<C-\><C-n>]])
+map('t', '<Esc>', '`')
+map('n', 'P', '$p')
+map('n', '<leader>b', "<cmd>lua require'dap'.toggle_breakpoint()<CR>")
+map('n', '<F5>', "<cmd>lua require'dap'.continue()<CR>")
+map('n', '<F6>', "<cmd>lua require'dap'.run_to_cursor()<CR>")
+map('n', '<F7>', "<cmd>lua require'dap'.step_over()<CR>")
+map('n', '<F8>', "<cmd>lua require'dap'.step_into()<CR>")
+map('n', '<F9>', "<cmd>lua require'dapui'.eval()<CR>")
+map('n', '<F2>', '<cmd>NvimTreeToggle<CR>')
+map('n', '<leader>w', '<cmd>write<CR>')
+map('n', '<leader>o', '<cmd>q<CR>')
+map('n', 'P', '$p')
+map('n', '<leader>t', '<cmd>Telescope<CR>')
+map('n', '<leader>d', '<cmd>lua vim.lsp.buf.implementation()<CR>')
+map('n', '<leader>c', '<cmd>lua vim.lsp.buf.declaration()<CR>')
+map('n', '<C-e>', '2<C-e>')
+map('n', '<C-y>', '2<C-y>')
+map('n', '<leader>wk', '')
+map('n', '<leader>wK', '')
+map('n', '<Left>', '<cmd>vertical resize -2<CR>')
+map('n', '<Right>', '<cmd>vertical resize +2<CR>')
+map('n', '<Up>', '<cmd>resize +2<CR>')
+map('n', '<Down>', '<cmd>resize -2<CR>')
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -273,6 +309,7 @@ require('lazy').setup({
 
   { -- Useful plugin to show you pending keybinds.
     'folke/which-key.nvim',
+    enabled = false,
     event = 'VimEnter', -- Sets the loading event to 'VimEnter'
     opts = {
       icons = {
@@ -605,6 +642,7 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
+        jedi_language_server = {},
         -- clangd = {},
         -- gopls = {},
         -- pyright = {},
@@ -757,58 +795,54 @@ require('lazy').setup({
           end,
         },
         completion = { completeopt = 'menu,menuone,noinsert' },
+        -- window = {
+        --   completion = {
+        --     side_padding = (cmp_style ~= 'atom' and cmp_style ~= 'atom_colored') and 1 or 0,
+        --     winhighlight = 'Normal:CmpPmenu,CursorLine:CmpSel,Search:None',
+        --     scrollbar = false,
+        --   },
+        --   documentation = {
+        --     border = border 'CmpDocBorder',
+        --     winhighlight = 'Normal:CmpDoc',
+        --   },
+        -- },
 
         -- For an understanding of why these mappings were
         -- chosen, you will need to read `:help ins-completion`
         --
         -- No, but seriously. Please read `:help ins-completion`, it is really good!
         mapping = cmp.mapping.preset.insert {
-          -- Select the [n]ext item
-          ['<C-n>'] = cmp.mapping.select_next_item(),
-          -- Select the [p]revious item
           ['<C-p>'] = cmp.mapping.select_prev_item(),
-
-          -- Scroll the documentation window [b]ack / [f]orward
-          ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+          ['<C-n>'] = cmp.mapping.select_next_item(),
+          ['<C-d>'] = cmp.mapping.scroll_docs(-4),
           ['<C-f>'] = cmp.mapping.scroll_docs(4),
+          ['<C-Space>'] = cmp.mapping.complete(),
+          ['<C-e>'] = cmp.mapping.close(),
 
-          -- Accept ([y]es) the completion.
-          --  This will auto-import if your LSP supports it.
-          --  This will expand snippets if the LSP sent a snippet.
-          ['<C-y>'] = cmp.mapping.confirm { select = true },
+          ['<CR>'] = cmp.mapping.confirm {
+            behavior = cmp.ConfirmBehavior.Insert,
+            select = true,
+          },
 
-          -- If you prefer more traditional completion keymaps,
-          -- you can uncomment the following lines
-          --['<CR>'] = cmp.mapping.confirm { select = true },
-          --['<Tab>'] = cmp.mapping.select_next_item(),
-          --['<S-Tab>'] = cmp.mapping.select_prev_item(),
-
-          -- Manually trigger a completion from nvim-cmp.
-          --  Generally you don't need this, because nvim-cmp will display
-          --  completions whenever it has completion options available.
-          ['<C-Space>'] = cmp.mapping.complete {},
-
-          -- Think of <c-l> as moving to the right of your snippet expansion.
-          --  So if you have a snippet that's like:
-          --  function $name($args)
-          --    $body
-          --  end
-          --
-          -- <c-l> will move you to the right of each of the expansion locations.
-          -- <c-h> is similar, except moving you backwards.
-          ['<C-l>'] = cmp.mapping(function()
-            if luasnip.expand_or_locally_jumpable() then
-              luasnip.expand_or_jump()
-            end
-          end, { 'i', 's' }),
-          ['<C-h>'] = cmp.mapping(function()
-            if luasnip.locally_jumpable(-1) then
-              luasnip.jump(-1)
+          ['<Tab>'] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_next_item()
+            elseif require('luasnip').expand_or_jumpable() then
+              require('luasnip').expand_or_jump()
+            else
+              fallback()
             end
           end, { 'i', 's' }),
 
-          -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
-          --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
+          ['<S-Tab>'] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_prev_item()
+            elseif require('luasnip').jumpable(-1) then
+              require('luasnip').jump(-1)
+            else
+              fallback()
+            end
+          end, { 'i', 's' }),
         },
         sources = {
           {
@@ -888,7 +922,7 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = { 'cpp', 'python', 'bash', 'c', 'diff', 'lua', 'markdown', 'markdown_inline', 'vim', 'vimdoc' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -906,6 +940,94 @@ require('lazy').setup({
     --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+  },
+
+  -- DAP
+  { 'nvim-neotest/nvim-nio' },
+  { 'theHamsta/nvim-dap-virtual-text' },
+  { 'rcarriga/nvim-dap-ui' },
+  { 'mfussenegger/nvim-dap-python' },
+  {
+    'mfussenegger/nvim-dap',
+    config = function()
+      local function configure()
+        require 'dap'
+
+        local dap_breakpoint = {
+          error = {
+            text = '🔴',
+            texthl = 'LspDiagnosticsSignError',
+            linehl = '',
+            numhl = '',
+          },
+          rejected = {
+            text = '🐞',
+            texthl = 'LspDiagnosticsSignHint',
+            linehl = '',
+            numhl = '',
+          },
+          stopped = {
+            text = '🔥',
+            texthl = 'LspDiagnosticsSignInformation',
+            linehl = 'DiagnosticUnderlineInfo',
+            numhl = 'LspDiagnosticsSignInformation',
+          },
+        }
+
+        vim.fn.sign_define('DapBreakpoint', dap_breakpoint.error)
+        vim.fn.sign_define('DapStopped', dap_breakpoint.stopped)
+        vim.fn.sign_define('DapBreakpointRejected', dap_breakpoint.rejected)
+      end
+
+      local function configure_exts()
+        require('nvim-dap-virtual-text').setup {
+          commented = true,
+          virt_text_pos = 'eol',
+          display_callback = function(variable, _buf, _stackframe, _node)
+            return variable.value
+          end,
+        }
+
+        local dap, dapui = require 'dap', require 'dapui'
+        dapui.setup {} -- use default
+        dap.listeners.after.event_initialized['dapui_config'] = function()
+          dapui.open()
+        end
+        dap.listeners.before.event_terminated['dapui_config'] = function()
+          dapui.close()
+        end
+        dap.listeners.before.event_exited['dapui_config'] = function()
+          dapui.close()
+        end
+      end
+
+      local function configure_debuggers()
+        require('dap-python').setup('python', {})
+        -- require("configs.dap.dap-cpp").setup()
+      end
+      configure() -- Configuration
+      configure_exts() -- Extensions
+      configure_debuggers() -- Debugger
+    end,
+  },
+
+  {
+    'windwp/nvim-autopairs',
+    event = 'InsertEnter',
+    -- Optional dependency
+    dependencies = { 'hrsh7th/nvim-cmp' },
+    config = function()
+      require('nvim-autopairs').setup {}
+      -- If you want to automatically add `(` after selecting a function or method
+      local cmp_autopairs = require 'nvim-autopairs.completion.cmp'
+      local cmp = require 'cmp'
+      cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
+    end,
+  },
+  {
+    'nvim-tree/nvim-tree.lua',
+    cmd = { 'NvimTreeToggle', 'NvimTreeFocus' },
+    opts = function() end,
   },
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
@@ -951,6 +1073,8 @@ require('lazy').setup({
     },
   },
 })
+
+require('nvim-autopairs').remove_rule '`'
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
