@@ -191,6 +191,9 @@ vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower win
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
 local map = vim.keymap.set
+map('n', '<Tab>', '<cmd>BufferNext<CR>')
+map('n', '<S-Tab>', '<cmd>BufferPrevious<CR>')
+
 map('i', '`', '<ESC>')
 map('i', '<ESC>', '`')
 map('o', '`', '<ESC>')
@@ -944,6 +947,40 @@ require('lazy').setup({
     --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+  },
+
+  -- using lazy.nvim
+  -- { 'akinsho/bufferline.nvim', version = '*', dependencies = 'nvim-tree/nvim-web-devicons' },
+
+  {
+    'romgrk/barbar.nvim',
+    dependencies = {
+      -- 'lewis6991/gitsigns.nvim', -- OPTIONAL: for git status
+      -- 'nvim-tree/nvim-web-devicons', -- OPTIONAL: for file icons
+    },
+    init = function()
+      vim.g.barbar_auto_setup = false
+    end,
+    opts = {
+      -- lazy.nvim will automatically call setup for you. put your options here, anything missing will use the default:
+      -- animation = true,
+      -- insert_at_start = true,
+      -- …etc.
+      icons = {
+        filetype = {
+          enabled = false,
+        },
+      },
+    },
+    version = '^1.0.0', -- optional: only update when a new 1.x version is released
+  },
+
+  {
+    'luozhiya/fittencode.nvim',
+    lazy = false,
+    config = function()
+      require('fittencode').setup()
+    end,
   },
 
   -- DAP
