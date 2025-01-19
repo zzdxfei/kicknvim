@@ -118,6 +118,8 @@ vim.schedule(function()
   vim.opt.clipboard = 'unnamedplus'
 end)
 
+vim.opt.autowrite = true
+
 -- Enable break indent
 vim.opt.breakindent = true
 
@@ -193,7 +195,6 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 local map = vim.keymap.set
 map('n', '<Tab>', '<cmd>BufferNext<CR>')
 map('n', '<S-Tab>', '<cmd>BufferPrevious<CR>')
-
 map('i', '`', '<ESC>')
 map('i', '<ESC>', '`')
 map('o', '`', '<ESC>')
@@ -739,7 +740,7 @@ require('lazy').setup({
         }
       end,
       formatters_by_ft = {
-        lua = { 'stylua' },
+        -- lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -769,12 +770,12 @@ require('lazy').setup({
           -- `friendly-snippets` contains a variety of premade snippets.
           --    See the README about individual language/framework/plugin snippets:
           --    https://github.com/rafamadriz/friendly-snippets
-          -- {
-          --   'rafamadriz/friendly-snippets',
-          --   config = function()
-          --     require('luasnip.loaders.from_vscode').lazy_load()
-          --   end,
-          -- },
+          {
+            'rafamadriz/friendly-snippets',
+            config = function()
+              require('luasnip.loaders.from_vscode').lazy_load()
+            end,
+          },
         },
       },
       'saadparwaiz1/cmp_luasnip',
@@ -850,16 +851,16 @@ require('lazy').setup({
           end, { 'i', 's' }),
         },
         sources = {
+          { name = 'nvim_lsp_signature_help' },
+          { name = 'nvim_lsp' },
+          { name = 'luasnip' },
+          { name = 'path' },
           {
             name = 'lazydev',
             -- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
             group_index = 0,
           },
-          { name = 'nvim_lsp_signature_help' },
           { name = 'buffer' },
-          { name = 'nvim_lsp' },
-          { name = 'luasnip' },
-          { name = 'path' },
         },
       }
     end,
@@ -1068,7 +1069,11 @@ require('lazy').setup({
   {
     'nvim-tree/nvim-tree.lua',
     cmd = { 'NvimTreeToggle', 'NvimTreeFocus' },
-    opts = function() end,
+    opts = {
+      git = {
+        enable = false,
+      },
+    },
   },
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
